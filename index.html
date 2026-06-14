@@ -62,7 +62,7 @@
             backdrop-filter: blur(5px);
         }
 
-        #upgradeBtn {
+        #upgradeBtn, #upgradeEnergyBtn, #upgradeRegenBtn {
             font-size: 18px;
             padding: 10px 20px;
             background-color: #ff9800;
@@ -71,11 +71,19 @@
             border-radius: 8px;
             cursor: pointer;
             margin-top: 10px;
+            transition: 0.2s;
         }
 
-        #upgradeBtn:disabled {
-            background-color: #555;
-            cursor: not-allowed;
+        #upgradeBtn:disabled, #upgradeEnergyBtn:disabled, #upgradeRegenBtn:disabled {
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: #acaaa7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+
         }
 
        #popups-container {
@@ -144,6 +152,17 @@
         <h3>🏪 Магазин апгрейдів</h3>
         <p>Прокачка: Мультиклік (Рівень <span id="layerLvl">1</span>)</p>
         <button id="upgradeBtn">Купити за 50 тапів</button>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+    
+        <p>🔋 Батарея: <span id="energyLvl">100</span> макс.</p>
+    <button id="upgradeEnergyBtn">Купити за 100 тапів</button>
+
+    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+
+    <p>⚡ Швидкість зарядки: +<span id="regenLvl">3</span>/сек</p>
+    <button id="upgradeRegenBtn">Купити за 200 тапів</button>
+
     </div>
 
     <div id="popups-container"></div>
@@ -152,7 +171,7 @@
     <div class="energy-text">
         <span>⚡ Енергія</span>
         <!-- Сюди будемо виводити цифри через JS -->
-        <span><span id="energyVal">100</span>/100</span>
+        <span><span id="energyVal">100</span>
     </div>
    
     <!-- Це сіра рамка -->
@@ -168,6 +187,10 @@
         let power = 1;          // Скільки дає один клік
         let upgradeCost = 50;   // Ціна першої прокачки
         let level = 1;          // Поточний рівень прокачки
+        let energyUpgradeCost = 100; // Початкова ціна акумулятора
+        let maxEnergy = 100;
+        let regenSpeed = 3;        // Початкова швидкість (те, що у тебе було += 3)
+        let regenUpgradeCost = 200; // Ціна апгрейду
 
         const counterDisplay = document.getElementById('counter');
         const clickPowerDisplay = document.getElementById('clickPower');
@@ -175,6 +198,10 @@
         const tapButton = document.getElementById('tapBtn');
         const upgradeButton = document.getElementById('upgradeBtn');
         const popupsContainer = document.getElementById('popups-container');
+        const upgradeEnergyButton = document.getElementById('upgradeEnergyBtn');
+        const energyLvlDisplay = document.getElementById('energyLvl');
+        const upgradeRegenButton = document.getElementById('upgradeRegenBtn');
+        const regenLvlDisplay = document.getElementById('regenLvl');
 
         // ФУНКЦІЯ ОНОВЛЕННЯ КНОПКИ МАГАЗИНУ (активна чи ні)
         function checkShop() {
@@ -182,6 +209,16 @@
                 upgradeButton.disabled = false;
             } else {
                 upgradeButton.disabled = true;
+            }
+            if (count >= energyUpgradeCost) {
+                upgradeEnergyButton.disabled = false;
+            } else {
+                 upgradeEnergyButton.disabled = true;
+            }
+            if (count >= regenUpgradeCost) {
+                upgradeRegenButton.disabled = false;
+            } else {
+                upgradeRegenButton.disabled = true;
             }
         }
 
@@ -196,7 +233,6 @@ if (energy >= power) {
     // Обов'язково викликаємо нашу функцію, щоб смужка на екрані зменшилась!
     updateEnergyUI(); 
     
-    // Далі твій старий код із попапами...
 } else {
     alert("Енергія на нулі! Почекай трохи.");
 }
@@ -215,7 +251,7 @@ if (energy >= power) {
                 count -= upgradeCost; // Знімаємо тапи за покупку
                 level++;              // Качаємо рівень
                 power += 1;           // Збільшуємо силу тапу на +1
-                upgradeCost = Math.round(upgradeCost * 2.5); // Наступний апгрейд дорожчий у 2.5 рази
+                upgradeCost = Math.round(upgradeCost * 2); // Наступний апгрейд дорожчий у 2 рази
 
                 // Оновлюємо все на екрані
                 counterDisplay.innerText = count;
@@ -250,7 +286,7 @@ if (energy >= power) {
         // Запускаємо перевірку магазину на самому початку
         checkShop();
         let energy = 100;
-const maxEnergy = 100;
+
 
 // Знаходимо наші нові елементи з HTML, щоб керувати ними
 const energyValDisplay = document.getElementById('energyVal');
@@ -258,14 +294,14 @@ const energyBar = document.getElementById('energyBar');
 
 function updateEnergyUI() {
     // Виводимо округлене число енергії на екран
-    energyValDisplay.innerText = Math.floor(energy);
+    energyValDisplay.innerText = Math.floor(energy) + "/" + maxEnergy;
     
     // Міняємо ширину кольорової смужки через CSS стиль width
     energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
 }
 setInterval(() => {
     if (energy < maxEnergy) {
-        energy += 3; // Додаємо по 3 одиниці кожну секунду
+        energy += regenSpeed; // тепер використовуємо змінну!
         
         if (energy > maxEnergy) {
             energy = maxEnergy; // Запобіжник, щоб не стало 105/100
@@ -274,6 +310,42 @@ setInterval(() => {
         updateEnergyUI(); // Оновлюємо смужку на екрані
     }
 }, 1000); // 1000 мілісекунд = 1 секунда
+
+upgradeEnergyButton.addEventListener('click', () => {
+    if (count >= energyUpgradeCost) {
+        count -= energyUpgradeCost; // Списуємо тапи
+        maxEnergy += 50;            // Збільшуємо максимальну енергію на 50
+        energy = maxEnergy;         // Відразу повністю заряджаємо батарею при купівлі!
+        
+        // Робимо наступний апгрейд дорожчим (наприклад, у 2 рази)
+        energyUpgradeCost = Math.round(energyUpgradeCost * 2); 
+
+        // Оновлюємо все на екрані
+        counterDisplay.innerText = count;
+        energyLvlDisplay.innerText = maxEnergy;
+        upgradeEnergyButton.innerText = `Купити за ${energyUpgradeCost} тапів`;
+
+        showPopup(`🔋 Батарея прокачана до ${maxEnergy}!`);
+        updateUI(); // Перемальовуємо інтерфейс і смужку енергії
+    }
+});
+upgradeRegenButton.addEventListener('click', () => {
+    if (count >= regenUpgradeCost) {
+        count -= regenUpgradeCost; // Списуємо тапи
+        regenSpeed += 1;          // Збільшуємо швидкість відновлення на +1 кожну секунду
+        
+        // Робимо наступний апгрейд дорожчим у 2.5 рази
+        regenUpgradeCost = Math.round(regenUpgradeCost * 2.5); 
+
+        // Оновлюємо текст на екрані
+        counterDisplay.innerText = count;
+        regenLvlDisplay.innerText = regenSpeed;
+        upgradeRegenButton.innerText = `Купити за ${regenUpgradeCost} тапів`;
+
+        showPopup(`⚡ Швидкість зарядки тепер +${regenSpeed}/сек!`);
+        checkShop(); // Оновлюємо кнопки в магазині
+    }
+});
     </script>
 </body>
 </html>
