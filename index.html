@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Мій Супер-Тапальник</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding-top: 50px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .counter-container {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stats {
+            font-size: 18px;
+            color: #b0bec5;
+            margin-bottom: 30px;
+        }
+
+        /* Стиль головної кнопки */
+        #tapBtn {
+            font-size: 26px;
+            padding: 20px 40px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 6px #005994;
+            transition: 0.1s;
+        }
+
+        /* Ефект натискання кнопки */
+        #tapBtn:active {
+            box-shadow: 0 2px #005994;
+            transform: translateY(4px);
+        }
+
+        /* Блок магазину */
+        .shop-container {
+            margin-top: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            display: inline-block;
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        #upgradeBtn {
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        #upgradeBtn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+       #popups-container {
+    position: fixed;
+    top: 20px;       /* Відступ 20 пікселів від верху екрана */
+    right: 20px;     /* Відступ 20 пікселів від правого краю */
+    z-index: 100;    /* Щоб сповіщення були поверх інших елементів */
+    display: flex;
+    flex-direction: column; /* Нові повідомлення будуть ставати одне під одним */
+    gap: 10px;       /* Відступ між плашками */
+}
+           
+
+        
+        /* Контейнер для всього блока енергії */
+.energy-container {
+    width: 300px;
+    margin: 0 auto 25px auto; /* Центруємо і робимо відступ знизу */
+}
+
+/* Робимо текст "Енергія 100/100" красивим і розкидаємо по боках */
+.energy-text {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Сіра задня рамка смужки */
+.energy-bar-bg {
+    width: 100%;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Внутрішня лінія, яка буде міняти ширину */
+.energy-bar-fill {
+    width: 100%; /* Спочатку вона заповнена на 100% */
+    height: 100%;
+    background: linear-gradient(90deg, #fce205, #ff9800); /* Жовто-помаранчевий градієнт */
+    border-radius: 10px;
+    transition: width 0.1s ease; /* Щоб стискалася плавно, а не смикалася */
+}
+    </style>
+</head>
+<body>
+
+    <h1>Мій супер-тапальник!</h1>
+    
+    <div class="counter-container">
+        🪙 <span id="counter">0</span>
+    </div>
+    
+    <div class="stats">
+        Сила тапу: +<span id="clickPower">1</span>
+    </div>
+
+    <button id="tapBtn">ТАПАЙ ТУТ!</button>
+
+    <br>
+
+    <div class="shop-container">
+        <h3>🏪 Магазин апгрейдів</h3>
+        <p>Прокачка: Мультиклік (Рівень <span id="layerLvl">1</span>)</p>
+        <button id="upgradeBtn">Купити за 50 тапів</button>
+    </div>
+
+    <div id="popups-container"></div>
+<!-- Віджет Енергії -->
+<div class="energy-container">
+    <div class="energy-text">
+        <span>⚡ Енергія</span>
+        <!-- Сюди будемо виводити цифри через JS -->
+        <span><span id="energyVal">100</span>/100</span>
+    </div>
+   
+    <!-- Це сіра рамка -->
+    <div class="energy-bar-bg">
+        <!-- А це внутрішня кольорова смужка, яку ми будемо стискати -->
+        <div id="energyBar" class="energy-bar-fill"></div>
+    </div>
+</div>
+<p style="font-size: 50px;">Розробнику на Бентлі</p>
+
+    <script>
+        let count = 0;          // Твій баланс тапів
+        let power = 1;          // Скільки дає один клік
+        let upgradeCost = 50;   // Ціна першої прокачки
+        let level = 1;          // Поточний рівень прокачки
+
+        const counterDisplay = document.getElementById('counter');
+        const clickPowerDisplay = document.getElementById('clickPower');
+        const layerLvlDisplay = document.getElementById('layerLvl');
+        const tapButton = document.getElementById('tapBtn');
+        const upgradeButton = document.getElementById('upgradeBtn');
+        const popupsContainer = document.getElementById('popups-container');
+
+        // ФУНКЦІЯ ОНОВЛЕННЯ КНОПКИ МАГАЗИНУ (активна чи ні)
+        function checkShop() {
+            if (count >= upgradeCost) {
+                upgradeButton.disabled = false;
+            } else {
+                upgradeButton.disabled = true;
+            }
+        }
+
+        // 1. КЛІК НА ГОЛОВНУ КНОПКУ
+        tapButton.addEventListener('click', () => {
+if (energy >= power) {
+    count += power;
+    energy -= power; // Забираємо стільки енергії, яка у нас сила тапу
+
+    counterDisplay.innerText = count;
+    
+    // Обов'язково викликаємо нашу функцію, щоб смужка на екрані зменшилась!
+    updateEnergyUI(); 
+    
+    // Далі твій старий код із попапами...
+} else {
+    alert("Енергія на нулі! Почекай трохи.");
+}
+
+            checkShop(); // Перевіряємо, чи вистачає тепер на апгрейд
+
+            // Виліт повідомлення на кожен 5-й клік (або якщо перевалило)
+            if (count % 5 === 0 || (count - power) % 5 > count % 5) {
+                showPopup(`🔥 Красава! Вже ${count}!`);
+            }
+        });
+
+        // 2. КЛІК НА КНОПКУ КУПІВЛІ АПГРЕДУ
+        upgradeButton.addEventListener('click', () => {
+            if (count >= upgradeCost) {
+                count -= upgradeCost; // Знімаємо тапи за покупку
+                level++;              // Качаємо рівень
+                power += 1;           // Збільшуємо силу тапу на +1
+                upgradeCost = Math.round(upgradeCost * 2.5); // Наступний апгрейд дорожчий у 2.5 рази
+
+                // Оновлюємо все на екрані
+                counterDisplay.innerText = count;
+                clickPowerDisplay.innerText = power;
+                layerLvlDisplay.innerText = level;
+                upgradeButton.innerText = `Купити за ${upgradeCost} тапів`;
+
+                showPopup(`🚀 Апгрейд! Сила тапу тепер: +${power}`);
+                checkShop();
+            }
+        });
+
+        // Функція для показу сповіщень
+        function showPopup(text) {
+            const popup = document.createElement('div');
+            popup.innerText = text;
+            popup.style.backgroundColor = '#4caf50';
+            popup.style.color = 'white';
+            popup.style.padding = '10px 20px';
+            popup.style.marginTop = '10px';
+            popup.style.borderRadius = '8px';
+            popup.style.boxShadow = '0px 4px 6px rgba(0,0,0,0.3)';
+            popup.style.fontSize = '20px';
+            
+            popupsContainer.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 1500);
+        }
+
+        // Запускаємо перевірку магазину на самому початку
+        checkShop();
+        let energy = 100;
+const maxEnergy = 100;
+
+// Знаходимо наші нові елементи з HTML, щоб керувати ними
+const energyValDisplay = document.getElementById('energyVal');
+const energyBar = document.getElementById('energyBar');
+
+function updateEnergyUI() {
+    // Виводимо округлене число енергії на екран
+    energyValDisplay.innerText = Math.floor(energy);
+    
+    // Міняємо ширину кольорової смужки через CSS стиль width
+    energyBar.style.width = `${(energy / maxEnergy) * 100}%`;
+}
+setInterval(() => {
+    if (energy < maxEnergy) {
+        energy += 3; // Додаємо по 3 одиниці кожну секунду
+        
+        if (energy > maxEnergy) {
+            energy = maxEnergy; // Запобіжник, щоб не стало 105/100
+        }
+        
+        updateEnergyUI(); // Оновлюємо смужку на екрані
+    }
+}, 1000); // 1000 мілісекунд = 1 секунда
+    </script>
+</body>
+</html>
