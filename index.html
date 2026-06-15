@@ -8,8 +8,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
-        body {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        body 
+       
+         {
+           background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             color: white;
             font-family: Arial, sans-serif;
             text-align: center;
@@ -133,9 +135,161 @@
     border-radius: 10px;
     transition: width 0.1s ease; /* Щоб стискалася плавно, а не смикалася */
 }
+/* Кнопка "3 рисочки" - окремий елемент, тло не чіпає */
+.menu-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 25px;
+    background: transparent;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.menu-toggle span {
+    width: 100%;
+    height: 3px;
+    background-color: #fff; /* Білі рисочки */
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+/* Сама плашка меню (виїжджає ПОВЕРХ твого налаштованого тла) */
+#sideMenu {
+    position: fixed;
+    top: 0;
+    right: -280px; /* Заховані зліва */
+    width: 250px;
+    height: 100%;
+    background-color: rgba(26, 26, 26, 0.95); /* Напівпрозорий темний, щоб тло гри красиво просвічувалось */
+    backdrop-filter: blur(5px); /* Ефект розмиття тла позаду меню */
+    box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.7);
+    transition: right  0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+    color: white;
+    box-sizing: border-box;
+}
+
+/* Коли меню активне */
+#sideMenu.active {
+    right: 0;
+}
+
+/* Стилі суто ДЛЯ ЕЛЕМЕНТІВ ВСЕРЕДИНІ МЕНЮ (не зламають гру) */
+#sideMenu h3 {
+    margin-top: 40px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    font-family: sans-serif;
+}
+
+#sideMenu h4 {
+    margin-bottom: 10px;
+    color: #ccc;
+}
+
+#sideMenu .avatar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 15px 0;
+}
+
+#sideMenu #userAvatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid #4caf50;
+    object-fit: cover;
+    margin-bottom: 8px;
+}
+
+#sideMenu .input-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+#sideMenu .input-group label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #aaa;
+}
+
+/* Стиль інпуту суто для меню, твої старі інпути в безпеці */
+#sideMenu .input-group input {
+    width: 100%;
+    padding: 8px;
+    background: #333;
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+/* Кнопки суто всередині меню */
+#sideMenu .menu-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#sideMenu .menu-btn-mini {
+    background: #444;
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 3px;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
+    <div id="menuToggle" class="menu-toggle">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<div id="sideMenu" class="side-menu">
+    <div class="menu-header">
+        <h3>Меню гри</h3>
+    </div>
+    
+    <div class="menu-content">
+        <div class="menu-section">
+            <h4>Налаштування акаунта</h4>
+            
+            <div class="avatar-container">
+                <img id="userAvatar" src="https://via.placeholder.com/80" alt="Аватар">
+                <input type="file" id="avatarInput" style="display: none;" accept="image/*">
+                <button onclick="document.getElementById('avatarInput').click()" class="menu-btn-mini">Змінити фото</button>
+            </div>
+
+            <div class="input-group">
+                <label for="usernameInput">Твій нікнейм:</label>
+                <input type="text" id="usernameInput" placeholder="Введіть нік...">
+            </div>
+            
+            <button id="saveProfileBtn" class="menu-btn">Зберегти профіль</button>
+        </div>
+
+        <hr>
+        
+        <p style="text-align: center; color: #888; font-size: 12px;">Далі буде...</p>
+    </div>
+</div>
     <div id="auth-container" style="background: rgba(15, 15, 15, 0.95); position: fixed; top:0; left:0; width:100%; height:100%; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif; backdrop-filter: blur(10px);">
     <h2 style="color: #ff9800; font-size: 36px; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px;">Drifttton-coin</h2>
     <p style="color: #888; margin-top: 0; margin-bottom: 25px; font-size: 16px;">Вхід в акаунт розробника</p>
@@ -291,12 +445,7 @@ if (energy >= power) {
 
             checkShop(); // Перевіряємо, чи вистачає тепер на апгрейд
 
-            // Виліт повідомлення на кожен 5-й клік (або якщо перевалило)
-            if (count % 5 === 0 || (count - power) % 5 > count % 5) {
-                showPopup(`🔥 Красава! Вже ${count}!`);
-
-                saveGameToCloud(); // Зберігаємо прогрес у хмару після кожного 5-го кліку
-            }
+            
         });
 
         // 2. КЛІК НА КНОПКУ КУПІВЛІ АПГРЕДУ
@@ -313,7 +462,7 @@ if (energy >= power) {
                 layerLvlDisplay.innerText = level;
                 upgradeButton.innerText = `Купити за ${upgradeCost} тапів`;
 
-                showPopup(`🚀 Апгрейд! Сила тапу тепер: +${power}`);
+                showPopup(`🚀 Апгрейд! Сила тапу тепер: +${power}`); 
                 checkShop();
                 saveGameToCloud(); // Зберігаємо прогрес у хмару після кожного апгрейду
             }
@@ -470,7 +619,8 @@ function saveGameToCloud() {
         maxEnergy: maxEnergy,
         regenSpeed: regenSpeed,
         regenUpgradeCost: regenUpgradeCost,
-        email: currentUser.email
+        email: currentUser.email,
+        username: document.getElementById('usernameInput').value || ""
     })
     .then(() => { 
         console.log("Прогрес синхронізовано з хмарою!"); 
@@ -495,7 +645,9 @@ function loadGameFromCloud() {
             maxEnergy = data.maxEnergy || 100;
             regenSpeed = data.regenSpeed || 3;
             regenUpgradeCost = data.regenUpgradeCost || 200;
-            
+            if (data.username) {
+                      document.getElementById('usernameInput').value = data.username;
+            }
             // Оновлюємо все на екрані
             counterDisplay.innerText = count;
             clickPowerDisplay.innerText = power;
@@ -512,9 +664,56 @@ function loadGameFromCloud() {
         }
         authContainer.style.display = 'none'; // Ховаємо чорну заставку, впускаємо в гру
     });
-    // Запускати збереження кожні 10 секунд (10000 мілісекунд)
-    setInterval(saveGameToCloud, 10000);
+    // Запускати збереження кожні 1 секунд (1000 мілісекунд)
+    setInterval(saveGameToCloud, 1000);
 }
+const menuToggle = document.getElementById('menuToggle');
+const sideMenu = document.getElementById('sideMenu');
+
+// Відкрити/закрити меню при кліку на 3 рисочки
+menuToggle.addEventListener('click', () => {
+    sideMenu.classList.toggle('active');
+});
+
+// Закривати меню, якщо клікнули в будь-яке інше місце екрана (повз меню)
+document.addEventListener('click', (event) => {
+    if (!sideMenu.contains(event.target) && !menuToggle.contains(event.target)) {
+        sideMenu.classList.remove('active');
+    }
+});
+// Кнопка збереження нікнейму в меню
+document.getElementById('saveProfileBtn').addEventListener('click', () => {
+    const newUsername = document.getElementById('usernameInput').value.trim();
+    
+    if (!currentUser) {
+        alert("Бро, ти спочатку залогінься!");
+        return;
+    }
+    
+    if (newUsername === "") {
+        alert("Нік не може бути порожнім, ну ти чого?");
+        return;
+    }
+
+    // Оновлюємо суто поле username в Firebase Firestore
+    db.collection("users").doc(currentUser.uid).update({
+        username: newUsername
+    })
+    .then(() => {
+        // Замість бісячого попапу просто міняємо текст на кнопці на секунду
+        const btn = document.getElementById('saveProfileBtn');
+        btn.innerText = "Збережено! ✔";
+        btn.style.backgroundColor = "#2e7d32";
+        
+        setTimeout(() => {
+            btn.innerText = "Зберегти профіль";
+            btn.style.backgroundColor = "#4caf50";
+        }, 1500);
+    })
+    .catch((error) => {
+        console.error("Помилка збереження ніку: ", error);
+    });
+});
     </script>
 </body>
 </html>
