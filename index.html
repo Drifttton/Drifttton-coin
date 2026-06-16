@@ -386,6 +386,21 @@ const db = firebase.firestore();
 
 // Змінна для збереження поточного авторизованого гравця
 let currentUser = null;
+// Ловимо повернення з Google на мобілці (ВСТАВЛЯТИ ПІД let currentUser = null;)
+firebase.auth().getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            currentUser = result.user;
+            console.log("Успішний вхід після редіректу (Мобілка):", currentUser.email);
+            loadGameFromCloud();
+            
+            // Якщо у тебе є блок авторизації, який треба сховати, зніми коментар з рядка нижче:
+            // document.getElementById('auth-container').style.display = 'none';
+        }
+    })
+    .catch((error) => {
+        console.error("Помилка мобільного входу через редірект:", error);
+    });
 
         let count = 0;          // Твій баланс тапів
         let power = 1;          // Скільки дає один клік
@@ -565,7 +580,7 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // 1. РЕЄСТРАЦІЯ
 registerBtn.addEventListener('click', () => {
-    const email = emailInput.value;
+    const email = emailInput.value.trim();
     const password = passwordInput.value;
     if(!email || !password) { authError.innerText = "Заповни всі поля, бро!"; return; }
     
@@ -580,7 +595,7 @@ registerBtn.addEventListener('click', () => {
 
 // 2. ВХІД
 loginBtn.addEventListener('click', () => {
-    const email = emailInput.value;
+    const email = emailInput.value.trim();
     const password = passwordInput.value;
     if (!email || !password) { authError.innerText = "Введіть пошту та пароль!"; return; }
     
@@ -597,13 +612,26 @@ loginBtn.addEventListener('click', () => {
 
 // 3. ВХІД ЧЕРЕЗ GOOGLE
 googleLoginBtn.addEventListener('click', () => {
-    auth.signInWithPopup(googleProvider)
-        .then((result) => {
-            currentUser = result.user;
-            console.log("Успішний вхід через Google:", currentUser.email);
-            loadGameFromCloud();
-        })
-        .catch((error) => { authError.innerText = "Помилка Google: " + error.message; });
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    
+    // Перевірка на телефон
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        // Для мобілок — вхід в цьому ж вікні без поп-апів
+        firebase.auth().signInWithRedirect(googleProvider);
+    } else {
+        // Для ПК — старий добрий поп-ап
+        firebase.auth().signInWithPopup(googleProvider)
+            .then((result) => {
+                currentUser = result.user;
+                console.log("Успішний вхід через Google (ПК):", currentUser.email);
+                loadGameFromCloud();
+            })
+            .catch((error) => {
+                authError.innerText = "Помилка входу: " + error.message;
+            });
+    }
 });
 
 // ФУНКЦІЯ ХМАРНОГО ЗБЕРЕЖЕННЯ
