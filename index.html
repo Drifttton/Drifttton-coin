@@ -253,6 +253,37 @@
     border-radius: 3px;
     cursor: pointer;
 }
+.leaderboard-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+}
+.leaderboard-card {
+    background: #1a1a1a;
+    width: 90%; 
+    max-width: 450px;
+    padding: 25px; 
+    border-radius: 20px;
+    border: 2px solid #22c55e;
+    position: relative; 
+    text-align: center;
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+}
+.leaderboard-title { color: #22c55e; margin-bottom: 20px; }
+.leaderboard-table { width: 100%; border-collapse: collapse; color: white; }
+.leaderboard-table th { color: #888; padding: 10px; border-bottom: 1px solid #333; }
+.leaderboard-table td { padding: 12px 10px; border-bottom: 1px solid #222; }
+.current-user-row { background: rgba(34, 197, 94, 0.2); color: #22c55e !important; font-weight: bold; }
+.close-btn {
+    position: absolute; top: 10px; right: 15px;
+    background: none; border: none; color: white; font-size: 30px; cursor: pointer;
+}
+.my-stats { margin-top: 20px; padding-top: 15px; border-top: 1px solid #333; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -287,12 +318,15 @@
 
         <hr>
         
-        <p style="text-align: center; color: #888; font-size: 12px;">Далі буде...</p>
+        <p style="text-align: center; color: #888; font-size: 12px;"></p>
+        <button id="showLeaderboardBtn" class="menu-btn">🏆 ТОП ГРАВЦІВ</button>
+
+
     </div>
 </div>
     <div id="auth-container" style="background: rgba(15, 15, 15, 0.95); position: fixed; top:0; left:0; width:100%; height:100%; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif; backdrop-filter: blur(10px);">
     <h2 style="color: #ff9800; font-size: 36px; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px;">Drifttton-coin</h2>
-    <p style="color: #888; margin-top: 0; margin-bottom: 25px; font-size: 16px;">Вхід в акаунт розробника</p>
+    <p style="color: #888; margin-top: 0; margin-bottom: 25px; font-size: 16px;">Вхід в акаунт</p>
     
     <input type="email" id="emailInput" placeholder="Твій Email" style="padding: 14px; margin: 6px; width: 300px; border-radius: 8px; border: 1px solid #333; background: #222; color: white; font-size: 16px;">
     <input type="password" id="passwordInput" placeholder="Пароль (мін. 6 символів)" style="padding: 14px; margin: 6px; width: 300px; border-radius: 8px; border: 1px solid #333; background: #222; color: white; font-size: 16px;">
@@ -356,6 +390,28 @@
     </div>
 </div>
 <p style="font-size: 50px;">Розробнику на Бентлі</p>
+<div id="leaderboardOverlay" class="leaderboard-overlay" style="display: none;">
+    <div class="leaderboard-card">
+        <button id="closeLeaderboard" class="close-btn">&times;</button>
+        <h2 class="leaderboard-title">🏆 ТОП-10 ГРАВЦІВ</h2>
+        <div id="leaderboardContent">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Гравець</th>
+                        <th>Баланс</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    </tbody>
+            </table>
+        </div>
+        <div class="my-stats">
+            <p>Ваш баланс: <span id="myLeaderboardBalance">0</span> 💰</p>
+        </div>
+    </div>
+</div>
 
     <script>
 
@@ -411,6 +467,7 @@ firebase.auth().getRedirectResult()
         const energyLvlDisplay = document.getElementById('energyLvl');
         const upgradeRegenButton = document.getElementById('upgradeRegenBtn');
         const regenLvlDisplay = document.getElementById('regenLvl');
+        
 
         // ФУНКЦІЯ ОНОВЛЕННЯ КНОПКИ МАГАЗИНУ (активна чи ні)
         function checkShop() {
@@ -709,6 +766,58 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
         console.error("Помилка збереження ніку: ", error);
     });
 });
+const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+const showLeaderboardBtn = document.getElementById('showLeaderboardBtn');
+const closeLeaderboard = document.getElementById('closeLeaderboard');
+const leaderboardBody = document.getElementById('leaderboardBody');
+const myLeaderboardBalance = document.getElementById('myLeaderboardBalance');
+
+// Функція відкриття
+showLeaderboardBtn.addEventListener('click', () => {
+    leaderboardOverlay.style.display = 'flex';
+    myLeaderboardBalance.innerText = count.toLocaleString(); // Показуємо твій поточний баланс
+    loadLeaderboardData();
+});
+
+// Функція закриття
+closeLeaderboard.addEventListener('click', () => {
+    leaderboardOverlay.style.display = 'none';
+});
+
+// Завантаження даних з Firebase
+function loadLeaderboardData() {
+    leaderboardBody.innerHTML = "<tr><td colspan='3'>Завантаження...</td></tr>";
+
+    db.collection("users")
+        .orderBy("count", "desc")
+        .limit(10)
+        .get()
+        .then((querySnapshot) => {
+            leaderboardBody.innerHTML = "";
+            let rank = 1;
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const isMe = (doc.id === currentUser.uid); // Перевірка чи це ти
+                const nick = data.username || data.nickname || (data.email ? data.email.split('@')[0] : "Гравець");
+                
+                
+                const row = `
+                    <tr class="${isMe ? 'current-user-row' : ''}">
+                        <td>${rank}</td>
+                        <td>${nick} ${isMe ? '(Ви)' : ''}</td>
+                        <td>${(data.count || 0).toLocaleString()}</td>
+                    </tr>
+                `;
+                leaderboardBody.innerHTML += row;
+                rank++;
+            });
+        })
+        .catch((error) => {
+            console.error("Помилка топу:", error);
+            leaderboardBody.innerHTML = "<tr><td colspan='3'>Помилка завантаження</td></tr>";
+        });
+}
     </script>
 </body>
 </html>
