@@ -11,8 +11,8 @@
         body 
        
          {
-           background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: white;
+           background: linear-gradient(135deg, #02000a, #010005, #1b0694);
+            color: rgb(255, 208, 0);
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
@@ -33,7 +33,7 @@
 
         .stats {
             font-size: 18px;
-            color: #b0bec5;
+            color: rgb(255, 208, 0);
             margin-bottom: 30px;
         }
 
@@ -42,18 +42,18 @@
             touch-action: manipulation; /* Вимикає подвійний тап для зуму і прибирає затримку */
             font-size: 26px;
             padding: 20px 40px;
-            background-color: #007acc;
+            background-color: #4700cc;
             color: white;
             border: none;
             border-radius: 15px;
             cursor: pointer;
-            box-shadow: 0 6px #005994;
+            box-shadow: 0 6px #311bac;
             transition: 0.1s;
         }
 
         /* Ефект натискання кнопки */
         #tapBtn:active {
-            box-shadow: 0 2px #005994;
+            box-shadow: 0 2px #4700cc;
             transform: translateY(4px);
         }
 
@@ -70,7 +70,7 @@
         #upgradeBtn, #upgradeEnergyBtn, #upgradeRegenBtn {
             font-size: 18px;
             padding: 10px 20px;
-            background-color: #ff9800;
+            background-color: #4700cc;
             color: white;
             border: none;
             border-radius: 8px;
@@ -274,6 +274,33 @@
     text-align: center;
     box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
 }
+/* Фоновий оверлей магазину */
+.shop-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex; justify-content: center; align-items: center;
+}
+
+/* Картка самого магазину всередині */
+.shop-card {
+    background: #111827;
+    width: 90%; max-width: 400px;
+    padding: 30px; border-radius: 20px;
+    border: 2px solid #3b82f6; /* Синій пацанський неон */
+    position: relative; text-align: center;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+/* Кнопка-хрестик */
+.close-btn {
+    position: absolute; top: 10px; right: 15px;
+    background: none; border: none; color: white; font-size: 30px; cursor: pointer;
+}
+.close-btn:hover { color: #ef4444; }
 .leaderboard-title { color: #22c55e; margin-bottom: 20px; }
 .leaderboard-table { width: 100%; border-collapse: collapse; color: white; }
 .leaderboard-table th { color: #888; padding: 10px; border-bottom: 1px solid #333; }
@@ -354,25 +381,12 @@
     </div>
 
     <button id="tapBtn">ТАПАЙ ТУТ!</button>
-
     <br>
 
-    <div class="shop-container">
-        <h3>🏪 Магазин апгрейдів</h3>
-        <p>Прокачка: Мультиклік (Рівень <span id="layerLvl">1</span>)</p>
-        <button id="upgradeBtn">Купити за 50 тапів</button>
+    <button id="openShopBtn" style="margin-top: 20px; padding: 12px 24px; font-size: 18px; background-color: #4700cc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;">🛒 Магазин апгрейдів</button>
+    <br>
 
-        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
-    
-        <p>🔋 Батарея: <span id="energyLvl">100</span> макс.</p>
-    <button id="upgradeEnergyBtn">Купити за 100 тапів</button>
-
-    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
-
-    <p>⚡ Швидкість зарядки: +<span id="regenLvl">3</span>/сек</p>
-    <button id="upgradeRegenBtn">Купити за 200 тапів</button>
-
-    </div>
+   
 
     <div id="popups-container"></div>
 <!-- Віджет Енергії -->
@@ -409,6 +423,27 @@
         </div>
         <div class="my-stats">
             <p>Ваш баланс: <span id="myLeaderboardBalance">0</span> 💰</p>
+        </div>
+    </div>
+</div>
+<div id="shopOverlay" class="shop-overlay" style="display: none;">
+    <div class="shop-card">
+        <button id="closeShop" class="close-btn">&times;</button>
+        
+        <div class="shop-container">
+            <h3>📊 Магазин апгрейдів</h3>
+            <p>Прокачка: Мультиклік (Рівень <span id="layerLvl">1</span>)</p>
+            <button id="upgradeBtn">Купити за 50 тапів</button>
+            
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+            
+            <p>🔋 Батарея: <span id="energyLvl">100</span> макс.</p>
+            <button id="upgradeEnergyBtn">Купити за 100 тапів</button>
+            
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+            
+            <p>⚡ Швидкість зарядки: +<span id="regenLvl">3</span>/сек</p>
+            <button id="upgradeRegenBtn">Купити за 200 тапів</button>
         </div>
     </div>
 </div>
@@ -818,6 +853,20 @@ function loadLeaderboardData() {
             leaderboardBody.innerHTML = "<tr><td colspan='3'>Помилка завантаження</td></tr>";
         });
 }
+// 1. Оголошуємо нові елементи
+const shopOverlay = document.getElementById('shopOverlay');
+const openShopBtn = document.getElementById('openShopBtn');
+const closeShop = document.getElementById('closeShop');
+
+// 2. Відкриття магазину при кліці на нову кнопку
+openShopBtn.addEventListener('click', () => {
+    shopOverlay.style.display = 'flex';
+});
+
+// 3. Закриття магазину на хрестик
+closeShop.addEventListener('click', () => {
+    shopOverlay.style.display = 'none';
+});
     </script>
 </body>
 </html>
