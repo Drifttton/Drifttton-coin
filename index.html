@@ -294,6 +294,34 @@
     box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
     color: white;
 }
+.garage-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: none; /* Спочатку вікно сховане */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Картка автосалону по центру екрана */
+.garage-card {
+    background: #111827;
+    width: 90%;
+    max-width: 450px;
+    padding: 25px;
+    border-radius: 20px;
+    border: 2px solid #22c55e; /* Зелений неоновий обідок */
+    position: relative;
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+    color: white;
+    max-height: 80vh; /* Скрол, якщо на телефоні не влазить */
+    overflow-y: auto;
+}
 
 /* Кнопка-хрестик */
 .close-btn {
@@ -311,6 +339,7 @@
     background: none; border: none; color: white; font-size: 30px; cursor: pointer;
 }
 .my-stats { margin-top: 20px; padding-top: 15px; border-top: 1px solid #333; font-size: 18px; }
+
     </style>
 </head>
 <body>
@@ -386,6 +415,8 @@
     <button id="openShopBtn" style="margin-top: 20px; padding: 12px 24px; font-size: 18px; background-color: #4700cc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;">🛒 Магазин апгрейдів</button>
     <br>
 
+    <button id="openGarageBtn" style="margin-top: 10px; padding: 12px 24px; font-size: 18px; background-color: #22c55e; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;">🏎️ Автопарк (Пасивний дохід)</button>
+    <br>
    
 
     <div id="popups-container"></div>
@@ -448,6 +479,34 @@
     </div>
 </div>
 
+<div id="garageOverlay" class="garage-overlay" style="display: none;">
+    <div class="garage-card">
+        <button id="closeGarage" style="position: absolute; top: 15px; right: 20px; background: none; border: none; color: white; font-size: 28px; cursor: pointer;">&times;</button>
+        <hr style="border: 0; border-top: 2px dashed #3b82f6; margin: 20px 0;">
+        <h3 style="color: #4ade80;">🏎️ НАШ АВТОПАРК (Пасивний дохід)</h3>
+     <p id="passiveIncomeText">Пасивний дохід: +0/сек</p>
+
+     <div class="cars-market">
+     <div class="car-item" style="background: #1f2937; padding: 10px; margin: 10px 0; border-radius: 10px; border: 1px solid #4b5563;">
+        <p><strong>🚙 ВАЗ 2105 "Корч"</strong> (Рівень <span id="zhigaLvlText">0</span>)</p>
+        <p style="font-size: 14px; color: #a1a1aa;">Дає: +0.05/сек</p>
+        <button id="buyZhigaBtn" style="background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer;">Купити за 100</button>
+    </div>
+
+    <div class="car-item" style="background: #1f2937; padding: 10px; margin: 10px 0; border-radius: 10px; border: 1px solid #4b5563;">
+        <p><strong>🚗 Chevrolet Cruze</strong> (Рівень <span id="cruzeLvlText">0</span>)</p>
+        <p style="font-size: 14px; color: #a1a1aa;">Дає: +0.1/сек</p>
+        <button id="buyCruzeBtn" style="background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer;">Купити за 1000</button>
+    </div>
+
+    <div class="car-item" style="background: #1f2937; padding: 10px; margin: 10px 0; border-radius: 10px; border: 1px solid #4b5563;">
+        <p><strong>👑 Mercedes W211</strong> (Рівень <span id="w211LvlText">0</span>)</p>
+        <p style="font-size: 14px; color: #a1a1aa;">Дає: +0.5/сек</p>
+        <button id="buyW211Btn" style="background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer;">Купити за 5000</button>
+    </div>
+</div>
+
+
     <script>
 
         // Конфігурація твого проєкту Firebase з консолі Google
@@ -491,6 +550,13 @@ firebase.auth().getRedirectResult()
         let maxEnergy = 100;
         let regenSpeed = 3;        // Початкова швидкість (те, що у тебе було += 3)
         let regenUpgradeCost = 200; // Ціна апгрейду
+        // Рівні тачок (0 - ще не куплена)
+        let carZhigaLvl = 0;
+        let carCruzeLvl = 0;
+        let carW211Lvl = 0;
+
+        // Загальний пасивний дохід за секунду
+        let passiveIncome = 0;
 
         const counterDisplay = document.getElementById('counter');
         const clickPowerDisplay = document.getElementById('clickPower');
@@ -529,7 +595,7 @@ if (energy >= power) {
     count += power;
     energy -= power; // Забираємо стільки енергії, яка у нас сила тапу
 
-    counterDisplay.innerText = count;
+    counterDisplay.innerText = Math.floor(count);
     
     // Обов'язково викликаємо нашу функцію, щоб смужка на екрані зменшилась!
     updateEnergyUI(); 
@@ -554,7 +620,7 @@ if (energy >= power) {
                 upgradeCost = Math.round(upgradeCost * 2); // Наступний апгрейд дорожчий у 2 рази
 
                 // Оновлюємо все на екрані
-                counterDisplay.innerText = count;
+                counterDisplay.innerText = Math.floor(count);
                 clickPowerDisplay.innerText = power;
                 layerLvlDisplay.innerText = level;
                 upgradeButton.innerText = `Купити за ${upgradeCost} тапів`;
@@ -564,6 +630,60 @@ if (energy >= power) {
                 saveGameToCloud(); // Зберігаємо прогрес у хмару після кожного апгрейду
             }
         });
+        // Функція розрахунку загального пасивного доходу
+function calculatePassiveIncome() {
+    // Кожен рівень Жиги дає +0.05, Круза +0.1, 211-го +0.5
+    passiveIncome = (carZhigaLvl * 0.05) + (carCruzeLvl * 0.1) + (carW211Lvl * 0.5);
+    
+    // Якщо у тебе є елемент на екрані для відображення доходу в сек, оновлюємо його
+    const passiveDisplay = document.getElementById('passiveIncomeText');
+    if (passiveDisplay) {
+        passiveDisplay.innerText = `Пасивний дохід: +${passiveIncome.toFixed(2)}/сек`;
+    }
+}
+function calculateOfflineIncome() {
+    const lastLeaveTime = localStorage.getItem('lastLeaveTime', Date.now());
+    
+    if (lastLeaveTime && passiveIncome > 0) {
+        const currentTime = Date.now();
+        // Рахуємо різницю в секундах
+        let secondsOffline = Math.floor((currentTime - parseInt(lastLeaveTime)) / 1000);
+        
+        // 3 години у секундах — це 3 * 60 * 60 = 10800 секунд
+        const maxOfflineSeconds = 10800; 
+        let temporaryStorageAlert = ""; // підказка для пацанів
+
+        if (secondsOffline > maxOfflineSeconds) {
+            secondsOffline = maxOfflineSeconds; // обрізаємо час до 3 годин
+            temporaryStorageAlert = " (Сейф переповнився! Максимум 3 години фарму)";
+        }
+
+        if (secondsOffline > 5) { // якщо пройшло хоча б 5 секунд
+            const earnedCoins = secondsOffline * passiveIncome;
+            count = parseFloat(count) + earnedCoins;
+            updateUI(); // оновлюємо баланс на екрані
+            
+            // Рахуємо хвилини для красивого тексту
+            const minutesOffline = Math.floor(secondsOffline / 60);
+            
+            alert(`🏎️ Твій автопарк працював! Тебе не було більше ${minutesOffline} хв, і тачки принесли тобі +${Math.floor(earnedCoins)} монет!${temporaryStorageAlert}`);
+        }
+    }
+}
+
+// Запускаємо таймер: кожну 1 секунду (1000 мс) додаємо пасивний дохід
+setInterval(() => {
+    if (passiveIncome > 0) {
+        count = parseFloat(count) + passiveIncome; // Додаємо монети
+
+        counterDisplay.innerText = Math.floor(count); // Оновлюємо баланс на екрані
+
+        updateUI(); // Оновлюємо баланс на головному екрані
+        
+        // Тут також бажано викликати функцію збереження в Firestore (saveGameToCloud), 
+        // але щоб не спамити базу кожну секунду, краще зберігати при виході або раз на 10-20 секунд.
+    }
+}, 1000);
 
         // Функція для показу сповіщень
         function showPopup(text) {
@@ -622,7 +742,7 @@ upgradeEnergyButton.addEventListener('click', () => {
         energyUpgradeCost = Math.round(energyUpgradeCost * 2); 
 
         // Оновлюємо все на екрані
-        counterDisplay.innerText = count;
+        counterDisplay.innerText = Math.floor(count);
         energyLvlDisplay.innerText = maxEnergy;
         upgradeEnergyButton.innerText = `Купити за ${energyUpgradeCost} тапів`;
 
@@ -640,7 +760,7 @@ upgradeRegenButton.addEventListener('click', () => {
         regenUpgradeCost = Math.round(regenUpgradeCost * 2.5); 
 
         // Оновлюємо текст на екрані
-        counterDisplay.innerText = count;
+        counterDisplay.innerText = Math.floor(count);
         regenLvlDisplay.innerText = regenSpeed;
         upgradeRegenButton.innerText = `Купити за ${regenUpgradeCost} тапів`;
 
@@ -707,7 +827,13 @@ function saveGameToCloud() {
         regenSpeed: regenSpeed,
         regenUpgradeCost: regenUpgradeCost,
         email: currentUser.email,
-        username: document.getElementById('usernameInput').value || ""
+        username: document.getElementById('usernameInput').value || "",
+        carZhigaLvl: carZhigaLvl,
+        carCruzeLvl: carCruzeLvl,
+        carW211Lvl: carW211Lvl,
+        lastLeaveTime: Date.now() // зберігаємо час останнього збереження для офлайн доходу
+    }, { merge: true
+      
     })
     .then(() => { 
         console.log("Прогрес синхронізовано з хмарою!"); 
@@ -736,7 +862,7 @@ function loadGameFromCloud() {
                       document.getElementById('usernameInput').value = data.username;
             }
             // Оновлюємо все на екрані
-            counterDisplay.innerText = count;
+            counterDisplay.innerText = Math.floor(count);
             clickPowerDisplay.innerText = power;
             layerLvlDisplay.innerText = level;
             upgradeButton.innerText = `Купити за ${upgradeCost} тапів`;
@@ -745,8 +871,17 @@ function loadGameFromCloud() {
             if (typeof regenLvlDisplay !== 'undefined' && regenLvlDisplay) {
                 regenLvlDisplay.innerText = regenSpeed;
                 upgradeRegenButton.innerText = `Купити за ${regenUpgradeCost} тапів`;
+                // Додавай це туди, де гра отримує об'єкт data з бази:
+carZhigaLvl = data.carZhigaLvl || 0;
+carCruzeLvl = data.carCruzeLvl || 0;
+carW211Lvl = data.carW211Lvl || 0;
+
+// Обов'язково оновлюємо інтерфейс гаража та запускаємо пасивний дохід!
+if (typeof updateCarsUI === "function") updateCarsUI();
+if (typeof calculateOfflineIncome === "function") calculateOfflineIncome();
             }
             updateEnergyUI();
+            counterDisplay.innerText = Math.floor(count);
             checkShop();
         }
         authContainer.style.display = 'none'; // Ховаємо чорну заставку, впускаємо в гру
@@ -810,7 +945,7 @@ const myLeaderboardBalance = document.getElementById('myLeaderboardBalance');
 // Функція відкриття
 showLeaderboardBtn.addEventListener('click', () => {
     leaderboardOverlay.style.display = 'flex';
-    myLeaderboardBalance.innerText = count.toLocaleString(); // Показуємо твій поточний баланс
+    myLeaderboardBalance.innerText = Math.floor(count).toLocaleString(); // Показуємо твій поточний баланс
     loadLeaderboardData();
 });
 
@@ -866,6 +1001,93 @@ openShopBtn.addEventListener('click', () => {
 // 3. Закриття магазину на хрестик
 closeShop.addEventListener('click', () => {
     shopOverlay.style.display = 'none';
+});
+// Ціна на тачки (динамічна, росте з кожним рівнем)
+let zhigaPrice = 100;
+let cruzePrice = 1000;
+let w211Price = 5000;
+
+// Функція оновлення текстів тачок в магазині
+function updateCarsUI() {
+    document.getElementById('zhigaLvlText').innerText = carZhigaLvl;
+    document.getElementById('buyZhigaBtn').innerText = `Купити за ${zhigaPrice}`;
+
+    document.getElementById('cruzeLvlText').innerText = carCruzeLvl;
+    document.getElementById('buyCruzeBtn').innerText = `Купити за ${cruzePrice}`;
+
+    document.getElementById('w211LvlText').innerText = carW211Lvl;
+    document.getElementById('buyW211Btn').innerText = `Купити за ${w211Price}`;
+    
+    calculatePassiveIncome();
+}
+
+// Клікалка на Жигу
+document.getElementById('buyZhigaBtn').addEventListener('click', () => {
+    if (count >= zhigaPrice) {
+        count -= zhigaPrice;
+        carZhigaLvl++;
+        zhigaPrice = Math.floor(zhigaPrice * 1.5); // Наступний рівень дорожчий на 50%
+        updateUI(); // Оновлюємо баланс гри
+        updateCarsUI(); // Оновлюємо магазин тачок
+        counterDisplay.innerText = Math.floor(count);
+    } else {
+        alert("Не вистачає монет на Жигуля, йди тапай! 💰");
+    }
+});
+
+// Клікалка на Круз
+document.getElementById('buyCruzeBtn').addEventListener('click', () => {
+    if (count >= cruzePrice) {
+        count -= cruzePrice;
+        carCruzeLvl++;
+        cruzePrice = Math.floor(cruzePrice * 1.6);
+        updateUI();
+        updateCarsUI();
+        counterDisplay.innerText = Math.floor(count);
+    } else {
+        alert("Бро, Chevrolet Cruze стільки не коштує, підкопи! 🚗");
+    }
+});
+
+// Клікалка на Мерс
+document.getElementById('buyW211Btn').addEventListener('click', () => {
+    if (count >= w211Price) {
+        count -= w211Price;
+        carW211Lvl++;
+        w211Price = Math.floor(w211Price * 1.7);
+        updateUI();
+        updateCarsUI();
+        counterDisplay.innerText = Math.floor(count);
+    } else {
+        alert("Куди ти на Мерса лізеш? Спочатку зароби! 👑");
+    }
+});
+const garageOverlay = document.getElementById('garageOverlay');
+const openGarageBtn = document.getElementById('openGarageBtn');
+const closeGarage = document.getElementById('closeGarage');
+
+// Відкрити гараж
+openGarageBtn.addEventListener('click', () => {
+    garageOverlay.style.display = 'flex';
+    updateCarsUI(); // Оновлюємо рівні та ціни при відкритті
+});
+
+// Закрити гараж
+closeGarage.addEventListener('click', () => {
+    garageOverlay.style.display = 'none';
+});
+// Відкрити автопарк
+document.getElementById('openGarageBtn').addEventListener('click', () => {
+    document.getElementById('garageOverlay').style.display = 'flex';
+    if (typeof updateCarsUI === "function") updateCarsUI(); // якщо є функція оновлення цифр
+});
+
+// Закрити автопарк на хрестик
+document.getElementById('closeGarage').addEventListener('click', () => {
+    document.getElementById('garageOverlay').style.display = 'none';
+});
+window.addEventListener('beforeunload', () => {
+    localStorage.setItem('lastLeaveTime', Date.now());
 });
     </script>
 </body>
