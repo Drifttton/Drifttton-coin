@@ -56,6 +56,36 @@
             box-shadow: 0 2px #4700cc;
             transform: translateY(4px);
         }
+        .main-tap-button {
+    width: 180px;          /* Ширина кнопки */
+    height: 180px;         /* Висота така ж, щоб вийшло коло */
+    border-radius: 50%;    /* Оце робить кнопку ідеально круглою */
+    background: linear-gradient(135deg, #1e90ff, #002f6c); /* Твій фірмовий дрифт-градієнт */
+    border: 4px solid #ffffff; /* Біла рамка, щоб виділялася */
+    box-shadow: 0 0 20px rgba(30, 144, 255, 0.6); /* Неонове світіння навколо */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease; /* Плавність при кліку */
+    outline: none;
+    user-select: none;     /* Щоб текст букви не виділявся при шаленому тапанні */
+}
+
+/* Ефект при натисканні (кнопка стискається і світиться яскравіше) */
+.main-tap-button:active {
+    transform: scale(0.95); /* Легкий ефект стискання */
+    box-shadow: 0 0 35px rgba(30, 144, 255, 0.9);
+}
+
+/* Стиль самого логотипу букви D всередині */
+.tap-logo {
+    font-family: 'Arial Black', 'Impact', sans-serif; /* Жирний спортивний шрифт */
+    font-size: 80px;       /* Розмір букви */
+    color: #ffffff;        /* Колір букви */
+    text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.5); /* Тінь під буквою для об'єму */
+    font-style: italic;    /* Нахиляємо букву «D» для ефекту швидкості/дрифту */
+}
 
         /* Блок магазину */
         .shop-container {
@@ -660,8 +690,8 @@ function calculateOfflineIncome() {
 
         if (secondsOffline > 5) { // якщо пройшло хоча б 5 секунд
             const earnedCoins = secondsOffline * passiveIncome;
-            count = parseFloat(count) + earnedCoins;
-            updateUI(); // оновлюємо баланс на екрані
+            count += earnedCoins; // додаємо зароблені монети до балансу   
+            counterDisplay.innerText = Math.floor(count);
             
             // Рахуємо хвилини для красивого тексту
             const minutesOffline = Math.floor(secondsOffline / 60);
@@ -674,14 +704,10 @@ function calculateOfflineIncome() {
 // Запускаємо таймер: кожну 1 секунду (1000 мс) додаємо пасивний дохід
 setInterval(() => {
     if (passiveIncome > 0) {
-        count = parseFloat(count) + passiveIncome; // Додаємо монети
-
-        counterDisplay.innerText = Math.floor(count); // Оновлюємо баланс на екрані
-
-        updateUI(); // Оновлюємо баланс на головному екрані
+        count += passiveIncome; // Додаємо монети
         
-        // Тут також бажано викликати функцію збереження в Firestore (saveGameToCloud), 
-        // але щоб не спамити базу кожну секунду, краще зберігати при виході або раз на 10-20 секунд.
+        // Оновлюємо баланс на екрані в реальному часі через Math.floor
+        counterDisplay.innerText = Math.floor(count); 
     }
 }, 1000);
 
@@ -872,9 +898,21 @@ function loadGameFromCloud() {
                 regenLvlDisplay.innerText = regenSpeed;
                 upgradeRegenButton.innerText = `Купити за ${regenUpgradeCost} тапів`;
                 // Додавай це туди, де гра отримує об'єкт data з бази:
-carZhigaLvl = data.carZhigaLvl || 0;
-carCruzeLvl = data.carCruzeLvl || 0;
-carW211Lvl = data.carW211Lvl || 0;
+      carZhigaLvl = data.carZhigaLvl || 0;
+      carCruzeLvl = data.carCruzeLvl || 0;
+      carW211Lvl = data.carW211Lvl || 0;
+
+      zhigaPrice = Math.floor(100 * Math.pow(1.5, carZhigaLvl));
+      cruzePrice = Math.floor(1000 * Math.pow(1.6, carCruzeLvl)); // у тебе в коді Круз дорожчає на 1.6!
+      w211Price = Math.floor(5000 * Math.pow(1.5, carW211Lvl));
+      updateCarsUI(); // Оновлюємо інтерфейс гаража після завантаження даних
+
+      if (typeof calculatePassiveIncome === "function") calculatePassiveIncome(); // Перераховуємо пасивний дохід після завантаження даних
+      updateCarsUI(); // Оновлюємо інтерфейс гаража після завантаження даних
+      counterDisplay.innerText = Math.floor(count); // Оновлюємо баланс на екрані
+      checkShop(); // Перевіряємо, чи можна купити апгрейди після завантаження даних   
+
+
 
 // Обов'язково оновлюємо інтерфейс гаража та запускаємо пасивний дохід!
 if (typeof updateCarsUI === "function") updateCarsUI();
@@ -1027,9 +1065,9 @@ document.getElementById('buyZhigaBtn').addEventListener('click', () => {
         count -= zhigaPrice;
         carZhigaLvl++;
         zhigaPrice = Math.floor(zhigaPrice * 1.5); // Наступний рівень дорожчий на 50%
-        updateUI(); // Оновлюємо баланс гри
         updateCarsUI(); // Оновлюємо магазин тачок
         counterDisplay.innerText = Math.floor(count);
+        if (typeof saveGameToCloud === "function") saveGameToCloud();
     } else {
         alert("Не вистачає монет на Жигуля, йди тапай! 💰");
     }
@@ -1041,9 +1079,9 @@ document.getElementById('buyCruzeBtn').addEventListener('click', () => {
         count -= cruzePrice;
         carCruzeLvl++;
         cruzePrice = Math.floor(cruzePrice * 1.6);
-        updateUI();
         updateCarsUI();
         counterDisplay.innerText = Math.floor(count);
+        if (typeof saveGameToCloud === "function") saveGameToCloud();
     } else {
         alert("Бро, Chevrolet Cruze стільки не коштує, підкопи! 🚗");
     }
@@ -1055,9 +1093,9 @@ document.getElementById('buyW211Btn').addEventListener('click', () => {
         count -= w211Price;
         carW211Lvl++;
         w211Price = Math.floor(w211Price * 1.7);
-        updateUI();
         updateCarsUI();
         counterDisplay.innerText = Math.floor(count);
+        if (typeof saveGameToCloud === "function") saveGameToCloud();
     } else {
         alert("Куди ти на Мерса лізеш? Спочатку зароби! 👑");
     }
