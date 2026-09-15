@@ -37,56 +37,42 @@
             margin-bottom: 30px;
         }
 
-        /* Стиль головної кнопки */
-        #tapBtn {
-            touch-action: manipulation; /* Вимикає подвійний тап для зуму і прибирає затримку */
-            font-size: 26px;
-            padding: 20px 40px;
-            background-color: #4700cc;
-            color: white;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 6px #311bac;
-            transition: 0.1s;
-        }
-
-        /* Ефект натискання кнопки */
-        #tapBtn:active {
-            box-shadow: 0 2px #4700cc;
-            transform: translateY(4px);
-        }
-        .main-tap-button {
-    width: 180px;          /* Ширина кнопки */
-    height: 180px;         /* Висота така ж, щоб вийшло коло */
-    border-radius: 50%;    /* Оце робить кнопку ідеально круглою */
-    background: linear-gradient(135deg, #1e90ff, #002f6c); /* Твій фірмовий дрифт-градієнт */
-    border: 4px solid #ffffff; /* Біла рамка, щоб виділялася */
-    box-shadow: 0 0 20px rgba(30, 144, 255, 0.6); /* Неонове світіння навколо */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        /* Золота кругла монета для тапу */
+#tapBtn.gold-tap-btn {
+    width: 170px !important;
+    height: 170px !important;
+    border-radius: 50% !important; /* Робить кнопку ідеально круглою */
+    margin: 20px auto !important;  /* Центрування */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Соковитий золотий градієнт */
+    background: radial-gradient(circle, #4700cc 0%, #2f0086 60%, #170042 100%) !important;
+    border: 5px solid hsl(0, 0%, 0%) !important;
+    box-shadow: 0 0 25px rgba(255, 179, 0, 0.7), inset 0 0 15px #00000099 !important;
+    
     cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.1s ease; /* Плавність при кліку */
     outline: none;
-    user-select: none;     /* Щоб текст букви не виділявся при шаленому тапанні */
+    user-select: none;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
-/* Ефект при натисканні (кнопка стискається і світиться яскравіше) */
-.main-tap-button:active {
-    transform: scale(0.95); /* Легкий ефект стискання */
-    box-shadow: 0 0 35px rgba(30, 144, 255, 0.9);
+/* Ефект пружини при кліку */
+#tapBtn.gold-tap-btn:active {
+    transform: scale(0.92) !important;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 1), inset 0 0 25px rgba(255, 255, 255, 0.9) !important;
 }
 
-/* Стиль самого логотипу букви D всередині */
+/* Логотип букви D всередині */
 .tap-logo {
-    font-family: 'Arial Black', 'Impact', sans-serif; /* Жирний спортивний шрифт */
-    font-size: 80px;       /* Розмір букви */
-    color: #ffffff;        /* Колір букви */
-    text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.5); /* Тінь під буквою для об'єму */
-    font-style: italic;    /* Нахиляємо букву «D» для ефекту швидкості/дрифту */
+    font-family: 'Arial Black', 'Impact', sans-serif;
+    font-size: 85px;
+    font-weight: 900;
+    font-style: italic; /* Гоночний нахил */
+    color: hwb(44 7% 11%);     /* золотий контур для контрасту */
+    text-shadow: 2px 2px 0px #ffe082, -2px -2px 0px #ffe082, 0 4px 10px rgba(0,0,0,0.4);
 }
-
         /* Блок магазину */
         .shop-container {
             margin-top: 50px;
@@ -439,13 +425,15 @@
         Сила тапу: +<span id="clickPower">1</span>
     </div>
 
-    <button id="tapBtn">ТАПАЙ ТУТ!</button>
-    <br>
+    <button id="tapBtn" class="gold-tap-btn">
+    <span class="tap-logo">D</span>
+     </button>
+    
 
     <button id="openShopBtn" style="margin-top: 20px; padding: 12px 24px; font-size: 18px; background-color: #4700cc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;">🛒 Магазин апгрейдів</button>
     <br>
 
-    <button id="openGarageBtn" style="margin-top: 10px; padding: 12px 24px; font-size: 18px; background-color: #22c55e; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;">🏎️ Автопарк (Пасивний дохід)</button>
+    <button id="openGarageBtn" style="margin-top: 10px; padding: 12px 24px; font-size: 18px; background-color: #4700cc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; max-width: 300px;">🏎️ Автопарк (Пасивний дохід)</button>
     <br>
    
 
