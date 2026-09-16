@@ -856,6 +856,7 @@ function saveGameToCloud() {
         regenUpgradeCost: regenUpgradeCost,
         email: currentUser.email,
         username: document.getElementById('usernameInput').value || "",
+        photoURL: document.getElementById('userAvatar').src || "",
         carZhigaLvl: carZhigaLvl,
         carCruzeLvl: carCruzeLvl,
         carW211Lvl: carW211Lvl,
@@ -889,6 +890,9 @@ function loadGameFromCloud() {
             if (data.username) {
                       document.getElementById('usernameInput').value = data.username;
             }
+            if (data.photoURL) {
+                document.getElementById('userAvatar').src = data.photoURL;
+            } 
             // Оновлюємо все на екрані
             counterDisplay.innerText = Math.floor(count);
             clickPowerDisplay.innerText = power;
@@ -976,6 +980,50 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
         console.error("Помилка збереження ніку: ", error);
     });
 });
+// 1. Попередній перегляд картинки, коли вибираєш файл з галереї
+document.getElementById('avatarInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Ставимо вибране фото в тег <img>
+            document.getElementById('userAvatar').src = e.target.result;
+        };
+        reader.readAsDataURL(file); // Конвертуємо файл
+    }
+});
+
+// 2. Збереження профілю (нікнейму та аватарки) при кліку на "Зберегти профіль"
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert("Спочатку увійди в акаунт!");
+        return;
+    }
+    // При отриманні даних користувача (userData):
+if (userData.photoURL) {
+    document.getElementById('userAvatar').src = userData.photoURL;
+}
+if (userData.username) {
+    document.getElementById('usernameInput').value = userData.username;
+}
+
+    const username = document.getElementById('usernameInput').value.trim();
+    const avatarSrc = document.getElementById('userAvatar').src;
+
+    try {
+        // Оновлюємо дані гравця в Firestore
+        await db.collection("users").doc(user.uid).set({
+            username: username || "Гонщик",
+            photoURL: avatarSrc
+        }, { merge: true });
+
+        alert("Профіль успішно збережено!");
+    } catch (error) {
+        console.error("Помилка збереження профілю:", error);
+        alert("Не вдалося зберегти профіль.");
+    }
+});
 const leaderboardOverlay = document.getElementById('leaderboardOverlay');
 const showLeaderboardBtn = document.getElementById('showLeaderboardBtn');
 const closeLeaderboard = document.getElementById('closeLeaderboard');
@@ -1006,22 +1054,28 @@ function loadLeaderboardData() {
             leaderboardBody.innerHTML = "";
             let rank = 1;
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const isMe = (doc.id === currentUser.uid); // Перевірка чи це ти
-                const nick = data.username || data.nickname || (data.email ? data.email.split('@')[0] : "Гравець");
-                
-                
-                const row = `
-                    <tr class="${isMe ? 'current-user-row' : ''}">
-                        <td>${rank}</td>
-                        <td>${nick} ${isMe ? '(Ви)' : ''}</td>
-                        <td>${(data.count || 0).toLocaleString()}</td>
-                    </tr>
-                `;
-                leaderboardBody.innerHTML += row;
-                rank++;
-            });
+           querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const isMe = (doc.id === currentUser.uid); // Перевірка чи це ти
+    const nick = data.username || data.nickname || (data.email ? data.email.split('@')[0] : "Гравець");
+    
+    // Отримуємо аватарку або ставимо дефолтну
+    const avatar = data.photoURL || "https://via.placeholder.com/30";
+
+    const row = `
+        <tr class="${isMe ? 'current-user-row' : ''}">
+            <td>${rank}</td>
+            <td style="display: flex; align-items: center; gap: 8px;">
+                <img src="${avatar}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+                <span>${nick} ${isMe ? '(Ви)' : ''}</span>
+            </td>
+            <td>${(data.count || 0).toLocaleString()}</td>
+        </tr>
+    `;
+    
+    leaderboardBody.innerHTML += row;
+    rank++;
+});
         })
         .catch((error) => {
             console.error("Помилка топу:", error);
