@@ -70,6 +70,28 @@
     outline: none;
     user-select: none;
     transition: transform 0.08s ease, box-shadow 0.08s ease;
+    #tapBtn.gold-tap-btn {
+    /* Твої існуючі стилі... */
+    
+    /* Додаємо вендорні префікси для 100% блокування виділення */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    
+    /* Прибираємо синій прямокутник та меню при тапі на мобілці */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* 💥 Блокуємо виділення для ВСЬОГО, що лежить всередині кнопки (буква D, лого тощо) */
+#tapBtn.gold-tap-btn * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    pointer-events: none; /* Щоб клік проходив крізь букву прямо на саму кнопку */
+}
 }
 
 /* Ефект пружини при кліку */
